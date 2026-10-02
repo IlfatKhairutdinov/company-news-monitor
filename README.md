@@ -155,8 +155,4 @@ MIT — see [LICENSE](LICENSE)
 
 ## Contact
 
-<<<<<<< HEAD
 **Ilfat Khairutdinov** — [GitHub](https://github.com/IlfatKhairutdinov)
-=======
-**Ilfat Khairutdinov** — [GitHub](https://github.com/IlfatKhairutdinov)
->>>>>>> da2f5a110db945e4a70ca6554e3613405f82cb5c
