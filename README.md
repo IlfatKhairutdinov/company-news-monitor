@@ -6,6 +6,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows)](https://microsoft.com/windows)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Made with](https://img.shields.io/badge/made%20with-%E2%9D%A4-red)]()
+[![PowerShell Check](https://github.com/IlfatKhairutdinov/company-news-monitor/actions/workflows/powershell-check.yml/badge.svg)](https://github.com/IlfatKhairutdinov/company-news-monitor/actions/workflows/powershell-check.yml)
 
 ---
 
