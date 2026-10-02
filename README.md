@@ -80,7 +80,7 @@ Unlike typical RSS aggregators, it combines **six independent data sources** to 
 
 1. Clone the repository:
    ```powershell
-   git clone https://github.com/YOUR_USERNAME/company-news-monitor.git
+   git clone https://github.com/IlfatKhairutdinov/company-news-monitor.git
    cd company-news-monitor
    ```
 
@@ -155,4 +155,4 @@ MIT — see [LICENSE](LICENSE)
 
 ## Contact
 
-**Ilfat Khairutdinov** — [GitHub](https://github.com/YOUR_USERNAME)
+**Ilfat Khairutdinov** — [GitHub](https://github.com/IlfatKhairutdinov)
