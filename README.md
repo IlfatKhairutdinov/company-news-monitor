@@ -46,7 +46,7 @@ This project solves it with a **fully local, zero-cost pipeline** built on open 
 
 ## Architecture
 
-```
+```text
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
 │ counterparties   │    │  DaData API      │    │  FSRAR Open      │
 │ (xlsx: name+INN) │───▶│  enrich.ps1      │───▶│  Data (10 GB XML)│
@@ -130,7 +130,7 @@ After running, check `_results\results_high.txt` for matches.
 
 ## Example Output
 
-```
+```text
 ===========================================
 Source:    Kommersant (news)
 Title:     Компания «Ромашка» выиграла тендер на поставку
@@ -143,7 +143,7 @@ Matched:   [H] ООО Ромашка; [M] Москва
 
 ## Project Structure
 
-```
+```text
 .
 ├── README.md
 ├── LICENSE
