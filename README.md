@@ -168,6 +168,27 @@ Matched:   [H] ООО Ромашка; [M] Москва
 └── _tech/                      # dev artifacts (gitignored)
 ```
 
+## Screenshots
+
+### Keyword base construction (`НАСТРОЙКА.bat`)
+
+Merges keywords from DaData, FSRAR Open Data, and manual sources into a unified priority-ranked list.
+
+![Setup](screenshots/setup.PNG)
+
+### Daily news parsing (`ЗАПУСТИТЬ.bat`)
+
+Runs 19 RSS sources, matches with compiled regex, and writes three priority-filtered reports.
+
+![Run](screenshots/run.PNG)
+
+### Example report (`results_high.txt`)
+
+High-priority matches — mentions of companies and executives.
+
+![Results](screenshots/results.PNG)
+
+
 ## Known Limitations
 
 - **Windows-only** — uses Excel COM and `Read-Host` for interactive prompts.

@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 title SETUP PARSER
 cd /d "%~dp0"
 
@@ -26,6 +27,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "_bin\merge_keywords.ps1"
 
 echo.
 echo ===========================================
-echo   DONE. Now run «¿œ”—“»“‹.bat
+echo   DONE. Now run –ó–ê–ü–£–°–¢–ò–¢–¨.bat
 echo ===========================================
 pause
