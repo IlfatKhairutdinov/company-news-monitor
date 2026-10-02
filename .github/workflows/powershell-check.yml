@@ -1,0 +1,82 @@
+name: PowerShell Syntax Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  syntax-check:
+    name: Verify PS1 scripts
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell modules
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
+          Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -SkipPublisherCheck
+
+      - name: Find all PS1 files
+        id: find
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Path "_bin" -Filter "*.ps1" -Recurse | Where-Object { $_.Name -ne "secrets.ps1" }
+          Write-Host "Found $($files.Count) PowerShell scripts:"
+          $files | ForEach-Object { Write-Host "  - $($_.Name)" }
+          "count=$($files.Count)" >> $env:GITHUB_OUTPUT
+
+      - name: Check syntax (parse-only)
+        shell: pwsh
+        run: |
+          $errors = 0
+          $files = Get-ChildItem -Path "_bin" -Filter "*.ps1" -Recurse | Where-Object { $_.Name -ne "secrets.ps1" }
+
+          foreach ($file in $files) {
+              Write-Host "Checking: $($file.Name)" -ForegroundColor Cyan
+              $tokens = $null
+              $parseErrors = $null
+              [System.Management.Automation.Language.Parser]::ParseFile(
+                  $file.FullName,
+                  [ref]$tokens,
+                  [ref]$parseErrors
+              ) | Out-Null
+
+              if ($parseErrors.Count -gt 0) {
+                  Write-Host "  SYNTAX ERRORS:" -ForegroundColor Red
+                  foreach ($err in $parseErrors) {
+                      Write-Host "    Line $($err.Extent.StartLineNumber): $($err.Message)" -ForegroundColor Red
+                  }
+                  $errors += $parseErrors.Count
+              } else {
+                  Write-Host "  OK" -ForegroundColor Green
+              }
+          }
+
+          if ($errors -gt 0) {
+              Write-Host ""
+              Write-Host "Total syntax errors: $errors" -ForegroundColor Red
+              exit 1
+          }
+
+          Write-Host ""
+          Write-Host "All scripts passed syntax check." -ForegroundColor Green
+
+      - name: Run PSScriptAnalyzer (warnings)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $files = Get-ChildItem -Path "_bin" -Filter "*.ps1" -Recurse | Where-Object { $_.Name -ne "secrets.ps1" }
+          $results = Invoke-ScriptAnalyzer -Path "_bin" -Recurse -Severity Error,Warning -ExcludeRule PSAvoidUsingWriteHost
+
+          if ($results) {
+              Write-Host "PSScriptAnalyzer found $($results.Count) issues:" -ForegroundColor Yellow
+              $results | Format-Table -AutoSize
+          } else {
+              Write-Host "PSScriptAnalyzer: clean." -ForegroundColor Green
+          }
