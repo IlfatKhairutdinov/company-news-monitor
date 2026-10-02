@@ -1,0 +1,35 @@
+﻿# ============================================================
+# Manual keywords example
+# Format: PRIORITY|Keyword
+# Priorities: H = high, M = medium, L = low
+# Lines starting with # are ignored
+# ============================================================
+
+# --- Companies (short forms) ---
+H|Example Company LLC
+H|ООО Ромашка
+H|ООО Лютик
+
+# --- Executives (full names) ---
+H|Иванов Иван Иванович
+H|Петров Петр Петрович
+
+# --- Brands and trademarks ---
+H|Ромашка Premium
+M|Лютик Fresh
+
+# --- Regions (from company addresses) ---
+M|Москва
+M|Московская область
+M|Санкт-Петербург
+
+# --- Industry (specific to alcohol distribution) ---
+M|оптовая торговля алкоголем
+M|алкогольный дистрибьютор
+L|лицензия алкоголь
+L|ЕГАИС
+
+# --- Events to monitor ---
+H|банкротство Ромашка
+H|проверка ФАС Ромашка
+L|штраф

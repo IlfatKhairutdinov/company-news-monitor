@@ -1,0 +1,43 @@
+﻿===========================================
+  NEWS PARSER RESULTS (v9)
+  Date: 2026-10-01 16:30:00
+  Keywords: H=890 M=0 L=1069
+  Filter: last 7 day(s)
+  Sources OK: 19, Failed: 0
+===========================================
+
+===========================================
+Source:    Kommersant (news)
+Title:     ООО Ромашка выиграла тендер на поставку
+Link:      https://www.kommersant.ru/doc/example
+Date:      2026-10-01 15:36
+Priority:  H
+Matched:   [H] ООО Ромашка; [H] Ромашка Premium
+===========================================
+
+===========================================
+Source:    TASS
+Title:     «Лютик Fresh» расширяет производство
+Link:      https://tass.ru/ekonomika/example
+Date:      2026-10-01 14:00
+Priority:  H
+Matched:   [H] ООО Лютик; [M] Лютик Fresh
+===========================================
+
+===========================================
+Source:    Ведомости
+Title:     Рынок оптовой торговли алкоголем вырос на 12%
+Link:      https://www.vedomosti.ru/business/example
+Date:      2026-09-30 12:15
+Priority:  M
+Matched:   [M] оптовая торговля алкоголем
+===========================================
+
+===========================================
+Source:    BezFormata NN
+Title:     Изменения в правилах лицензирования алкоголя
+Link:      https://nnovgorod.bezformata.com/listnews/example
+Date:      2026-09-30 03:00
+Priority:  L
+Matched:   [L] лицензия алкоголь; [L] ЕГАИС
+===========================================
