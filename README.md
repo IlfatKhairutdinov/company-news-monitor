@@ -22,10 +22,11 @@ This project solves it with a **fully local, zero-cost pipeline** built on open 
    - Fetches company data via [DaData API](https://dadata.ru/) — directors, addresses, OKVED
    - Mines [FSRAR Open Data](https://fsrar.gov.ru/opendata) — government alcohol/tobacco licensing registry (10 GB XML, 1.7M records)
    - Finds related companies by shared directors and addresses
+   - Extracts clean company names without legal-form prefixes (ООО, АО, ПАО...)
 
-2. **Monitors 19+ news sources** — federal (TASS, Kommersant, Vedomosti, RBC) and regional (NN News, BezFormata)
+2. **Monitors 41 news sources** — 19 federal RSS (TASS, Kommersant, Vedomosti, RBC), 12 regional BezFormata subdomains, 10 industry feeds (Retail.ru, New Retail, МК categories, URBC)
 
-3. **Matches with compiled regex** — 2000+ keywords in a single pass, ~50× faster than naive loops
+3. **Matches with compiled regex** — 2500+ keywords in a single pass, ~50× faster than naive loops
 
 4. **Outputs three filtered reports** by priority:
    - `results_high.txt` — companies, executives
@@ -37,9 +38,12 @@ This project solves it with a **fully local, zero-cost pipeline** built on open 
 | Feature | Details |
 |---|---|
 | **Multi-source enrichment** | DaData API + FSRAR Open Data + cross-referencing |
-| **Streaming XML parser** | Reads 10 GB FSRAR dump with 8 MB chunks — no OOM |
+| **Clean keyword extraction** | Strips ООО/АО/ПАО prefixes — matches how journalists actually write names |
+| **Streaming XML parser** | Reads 10 GB FSRAR dump with 8 MB chunks — no OOM, 1.67M records in 14 min |
 | **Priority-based filtering** | H/M/L classification keeps signal-to-noise ratio high |
-| **Regex compilation** | Single compiled pattern for 2000+ keywords |
+| **Regex compilation** | Single compiled pattern for 2500+ keywords, ~40× faster than naive loops |
+| **Word boundaries** | Short keywords (< 8 chars) match only as whole words — no false positives |
+| **Stop-list filter** | Excludes generic words (РЕГИОН, ПРЕМЬЕР, ИНВЕСТ, СТАНДАРТ...) |
 | **Address normalization** | Handles Russian street variations (`ул.` vs `УЛИЦА`, `ё → е`) |
 | **URL cache** | Each article shown only once across runs |
 | **UTF-8 safe** | Full Cyrillic support in scripts, configs, outputs |
@@ -56,18 +60,26 @@ This project solves it with a **fully local, zero-cost pipeline** built on open 
          │                       ▼                       ▼
          │              ┌──────────────────┐    ┌──────────────────┐
          │              │ keywords_auto    │    │ keywords_fsrar   │
-         │              │ (870 H)          │    │ (1148 L)         │
+         │              │ (~870 H)         │    │ (~1150 L)        │
          │              └──────────────────┘    └──────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│             MERGE  →  keywords_all.csv  (1959 keywords)          │
+│           expand_keywords.ps1 → clean names (~350 new H)         │
+└──────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌──────────────────────────────────────────────────────────────────┐
+│             MERGE  →  keywords_all.csv  (~2200 keywords)         │
 └──────────────────────────────────────────────────────────────────┘
                                  │
                                  ▼
                     ┌────────────────────────┐
                     │  parser.ps1 (v9)       │
-                    │  19 RSS + HTML         │
+                    │  41 sources:           │
+                    │   19 federal RSS       │
+                    │   12 BezFormata HTML   │
+                    │   10 industry feeds    │
                     │  Compiled regex match  │
                     │  URL cache             │
                     └────────────────────────┘
@@ -134,11 +146,11 @@ After running, check `_results\results_high.txt` for matches.
 ```text
 ===========================================
 Source:    Kommersant (news)
-Title:     Компания «Ромашка» выиграла тендер на поставку
-Link:      https://www.kommersant.ru/doc/8991422
-Date:      2026-10-01 15:36
+Title:     РБК: Герхард Шредер приехал в Москву
+Link:      https://www.kommersant.ru/doc/9008147
+Date:      2026-10-07 14:00
 Priority:  H
-Matched:   [H] ООО Ромашка; [M] Москва
+Matched:   [H] ГИПЕРГЛОБУС
 ===========================================
 ```
 
@@ -155,10 +167,11 @@ Matched:   [H] ООО Ромашка; [M] Москва
 ├── _bin/                       # all scripts
 │   ├── paths.ps1               # centralized path config
 │   ├── secrets.ps1             # API key (gitignored)
-│   ├── parser.ps1              # main news parser
+│   ├── parser.ps1              # main news parser (41 sources)
 │   ├── enrich.ps1              # DaData enrichment
 │   ├── enrich2.ps1             # affiliated companies
-│   ├── fsrar_parse.ps1         # streaming XML parser
+│   ├── expand_keywords.ps1     # clean company names extraction
+│   ├── fsrar_parse.ps1         # streaming XML parser (10 GB)
 │   └── ...
 ├── _config/                    # user input
 │   ├── counterparties.xlsx     # company list (gitignored)
@@ -173,13 +186,13 @@ Matched:   [H] ООО Ромашка; [M] Москва
 
 ### Keyword base construction (`НАСТРОЙКА.bat`)
 
-Merges keywords from DaData, FSRAR Open Data, and manual sources into a unified priority-ranked list.
+Merges keywords from DaData, FSRAR Open Data, clean-name expansion, and manual sources into a unified priority-ranked list.
 
 ![Setup](screenshots/setup.PNG)
 
 ### Daily news parsing (`ЗАПУСТИТЬ.bat`)
 
-Runs 19 RSS sources, matches with compiled regex, and writes three priority-filtered reports.
+Runs 41 sources (19 federal RSS + 12 BezFormata regions + 10 industry feeds), matches with compiled regex, and writes three priority-filtered reports.
 
 ![Run](screenshots/run.PNG)
 
@@ -189,17 +202,31 @@ High-priority matches — mentions of companies and executives.
 
 ![Results](screenshots/results.PNG)
 
+## News Sources
+
+### Federal RSS (19)
+
+TASS, Kommersant (2 feeds), Vedomosti, RBC, RIA Novosti, Lenta.ru, Gazeta.ru, Interfax, RT, CNews, Российская Газета, PravdaReport, Московский Комсомолец, NEWSru.com, Life.ru, Habr IT, NN News, NNTV.
+
+### Regional BezFormata (12)
+
+Москва, Санкт-Петербург, Екатеринбург, Казань, Красноярск, Новосибирск, Омск, Самара, Улан-Удэ, Краснодар, Хабаровск, Нижний Новгород.
+
+### Industry Feeds (10)
+
+Retail.ru, New Retail, Retailer.ru, Финмаркет, Москвич Mag, МК Экономика, МК Происшествия, МК Общество, МК Спорт, МК Культура, URBC.Ru.
 
 ## Known Limitations
 
 - **Windows-only** — uses Excel COM and `Read-Host` for interactive prompts.
-- **Single-threaded** — 19 sources processed sequentially; parallelization is on the roadmap.
+- **Single-threaded** — 41 sources processed sequentially; parallelization is on the roadmap.
 - **FSRAR XML is 10 GB uncompressed** — requires ~12 GB free disk space.
-- **Yandex News** may require captcha solving → disabled by default.
+- **Yandex News / Google News** — Yandex requires captcha, Google blocked on corporate networks. Both disabled by default.
 
 ## Roadmap
 
 - [ ] Parallel source processing via Runspace Pools
+- [ ] AND-logic for M-priority keywords (reduce false positives from region names)
 - [ ] SQLite backend for URL cache (replace plain text file)
 - [ ] Docker container for portable deployment
 - [ ] Web UI on top of `results.csv`
