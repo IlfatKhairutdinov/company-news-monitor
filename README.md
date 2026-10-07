@@ -89,6 +89,11 @@ This project solves it with a **fully local, zero-cost pipeline** built on open 
         results_high.txt  results_medium.txt  results_low.txt
 ```
 
+## Documentation
+
+- **[User Guide](docs/USER_GUIDE.md)** — пошаговое руководство по всем трём режимам
+- **[Architecture](docs/ARCHITECTURE.md)** — технические детали (streaming XML, regex, нормализация адресов)
+
 ## Tech Stack
 
 - **PowerShell 5.1** — core scripting
