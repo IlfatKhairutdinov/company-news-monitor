@@ -11,7 +11,7 @@
 . "$PSScriptRoot\paths.ps1"
 
 $maxAgeDays         = 7
-$httpTimeoutSec     = 20
+$httpTimeoutSec     = 40
 $enableYandexNews   = $false   # <-- было $true
 $yandexDelayMs      = 5000
 $yandexTopN         = 20
@@ -77,8 +77,8 @@ function Escape-KeywordRegex {
     param([string]$w)
     $esc = [regex]::Escape($w)
     # Short keywords (<=4 chars) - use cyrillic word boundaries
-    if ($w.Length -le 4) {
-        return "(?<![А-Яа-яЁёA-Za-z0-9])$esc(?![А-Яа-яЁёA-Za-z0-9])"
+    if ($w.Length -le 8) {
+    	return "(?<![А-Яа-яЁёA-Za-z0-9])$esc(?![А-Яа-яЁёA-Za-z0-9])"
     }
     return $esc
 }
@@ -215,7 +215,7 @@ function Get-BezformataNews {
                 "Accept-Language" = "ru-RU,ru;q=0.9,en;q=0.8"
             } -ErrorAction Stop
         $html = $resp.Content
-        [System.IO.File]::WriteAllText($debugPath, $html, [System.Text.Encoding]::UTF8)
+        # [System.IO.File]::WriteAllText($debugPath, $html, [System.Text.Encoding]::UTF8)
         $sl = [System.Text.RegularExpressions.RegexOptions]::Singleline
         $articleRe = [regex]::new('<article[^>]*class="(?:hottopicline|newtopicline)"[^>]*>(?<body>.*?)</article>', $sl)
         foreach ($am in $articleRe.Matches($html)) {
@@ -264,7 +264,19 @@ $sources = @(
     @{ Name = "PravdaReport";         Url = "https://www.pravdareport.com/export.xml" },
     @{ Name = "Московский Комсомолец";Url = "https://www.mk.ru/rss/index.xml" },
     @{ Name = "NEWSru.com";           Url = "https://rss.newsru.com/top/big/" },
-    @{ Name = "Life.ru";              Url = "https://life.ru/rss" }
+    @{ Name = "Life.ru";              Url = "https://life.ru/rss" },
+        # --- Добавлено 2026-10-07: источники из Контур.Фокуса ---
+    @{ Name = "Retail.ru";           Url = "https://www.retail.ru/rss/news/" },
+    @{ Name = "New Retail";          Url = "https://new-retail.ru/rss/" },
+    @{ Name = "Retailer.ru";         Url = "https://retailer.ru/feed/" },
+    @{ Name = "Финмаркет";           Url = "https://www.finmarket.ru/rss/news.asp" },
+    @{ Name = "Москвич Mag";         Url = "https://moskvichmag.ru/feed/" },
+    @{ Name = "МК Экономика";        Url = "https://www.mk.ru/rss/economics/index.xml" },
+    @{ Name = "МК Происшествия";     Url = "https://www.mk.ru/rss/incident/index.xml" },
+    @{ Name = "МК Общество";         Url = "https://www.mk.ru/rss/social/index.xml" },
+    @{ Name = "URBC.Ru";             Url = "https://urbc.ru/rss.xml" },
+    @{ Name = "МК Спорт";            Url = "https://www.mk.ru/rss/sport/index.xml" },
+    @{ Name = "МК Культура";         Url = "https://www.mk.ru/rss/culture/index.xml" }
 )
 
 # ============================================================
@@ -360,23 +372,55 @@ foreach ($source in $sources) {
     }
 }
 
-# --- BezFormata NN HTML ---
+# --- BezFormata регионы (HTML) ---
+$bezRegions = @(
+    @{ Name = "Нижний Новгород";  Slug = "nnovgorod" },
+    @{ Name = "Москва";           Slug = "moskva" },
+    @{ Name = "Санкт-Петербург";  Slug = "sanktpeterburg" },
+    @{ Name = "Екатеринбург";     Slug = "ekaterinburg" },
+    @{ Name = "Казань";           Slug = "kazan" },
+    @{ Name = "Красноярск";       Slug = "krasnoyarsk" },
+    @{ Name = "Новосибирск";      Slug = "novosibirsk" },
+    @{ Name = "Омск";             Slug = "omsk" },
+    @{ Name = "Самара";           Slug = "samara" },
+    @{ Name = "Улан-Удэ";         Slug = "ulanude" },
+    @{ Name = "Краснодар";        Slug = "krasnodar" },
+    @{ Name = "Хабаровск";        Slug = "habarovsk" }
+)
+
 Write-Host ""
-Write-Host "[BezFormata NN HTML] https://nnovgorod.bezformata.com/listnews/" -ForegroundColor Magenta
-try {
-    $bez = Get-BezformataNews "https://nnovgorod.bezformata.com/listnews/"
-    $found = 0
-    foreach ($item in $bez) {
-        if ($item.DateObj -and $item.DateObj -lt $cutoff) { $skippedByDate++; continue }
-        if (Add-FoundResult $item.Title $item.Link "BezFormata NN" $item.DateObj $item.DateRaw $item.Description) { $found++ }
+Write-Host ("[BezFormata: " + $bezRegions.Count + " регионов]") -ForegroundColor Magenta
+
+foreach ($region in $bezRegions) {
+    $url = "https://$($region.Slug).bezformata.com/listnews/"
+    Write-Host ("  [" + $region.Name + "] ") -NoNewline
+
+    try {
+        $bez = Get-BezformataNews $url
+        $found = 0
+        foreach ($item in $bez) {
+            if ($item.DateObj -and $item.DateObj -lt $cutoff) { $skippedByDate++; continue }
+            if (Add-FoundResult $item.Title $item.Link ("BezFormata " + $region.Name) $item.DateObj $item.DateRaw $item.Description) {
+                $found++
+            }
+        }
+        if ($found -gt 0) {
+            Write-Host ("FOUND: " + $found) -ForegroundColor Yellow
+        } else {
+            Write-Host "no matches" -ForegroundColor DarkGray
+        }
+        $okCount++
+        $logLines += "OK  |BezFormata $($region.Name)|$url|found=$found"
+    } catch {
+        $msg = $_.Exception.Message
+        if ($msg.Length -gt 50) { $msg = $msg.Substring(0, 50) + "..." }
+        Write-Host ("ERROR: " + $msg) -ForegroundColor Red
+        $failCount++
+        $logLines += "FAIL|BezFormata $($region.Name)|$url|$msg"
     }
-    Write-Host ("  found: " + $found) -ForegroundColor $(if ($found -gt 0) { "Yellow" } else { "DarkGray" })
-    $okCount++
-    $logLines += "OK|BezFormata NN|https://nnovgorod.bezformata.com/listnews/|found=$found"
-} catch {
-    Write-Host ("  ERROR: " + $_.Exception.Message) -ForegroundColor Red
-    $failCount++
-    $logLines += "FAIL|BezFormata NN||$($_.Exception.Message)"
+
+    # Пауза между регионами, чтобы не получить rate limit
+    Start-Sleep -Milliseconds 1500
 }
 
 # --- Yandex News RSS ---

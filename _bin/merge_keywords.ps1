@@ -86,7 +86,23 @@ foreach ($kv in ($byWord.GetEnumerator() | Sort-Object { $_.Value.prio }, { $_.V
     $stats[$kv.Value.prio]++
 }
 
-[System.IO.File]::WriteAllLines($keywordsFile, $out, (New-Object System.Text.UTF8Encoding $true))
+# Retry logic for locked file
+$attempt = 0
+$maxAttempts = 5
+while ($attempt -lt $maxAttempts) {
+    $attempt++
+    try {
+        [System.IO.File]::WriteAllLines($keywordsFile, $out, (New-Object System.Text.UTF8Encoding $true))
+        break
+    } catch {
+        Write-Host ("  File locked, retry $attempt/$maxAttempts...") -ForegroundColor Yellow
+        Start-Sleep -Seconds 2
+        if ($attempt -eq $maxAttempts) {
+            Write-Host ("  FAILED after $maxAttempts attempts: " + $_.Exception.Message) -ForegroundColor Red
+            throw
+        }
+    }
+}
 
 Write-Host ""
 Write-Host "===========================================" -ForegroundColor Green

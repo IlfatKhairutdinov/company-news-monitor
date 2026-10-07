@@ -10,19 +10,23 @@ echo  SETUP - update companies and keywords
 echo ===========================================
 echo.
 
-echo [1/4] Excel -^> companies.csv
+echo [1/5] Excel -^> companies.csv
 powershell -NoProfile -ExecutionPolicy Bypass -File "_bin\excel_to_csv.ps1"
 
 echo.
-echo [2/4] DaData enrich (names + directors)
+echo [2/5] DaData enrich (names + directors)
 powershell -NoProfile -ExecutionPolicy Bypass -File "_bin\enrich.ps1"
 
 echo.
-echo [3/4] DaData affiliated (addresses)
+echo [3/5] DaData affiliated (addresses)
 powershell -NoProfile -ExecutionPolicy Bypass -File "_bin\enrich2.ps1"
 
 echo.
-echo [4/4] Merge keywords
+echo [4/5] Expand company names
+powershell -NoProfile -ExecutionPolicy Bypass -File "_bin\expand_keywords.ps1"
+
+echo.
+echo [5/5] Merge keywords
 powershell -NoProfile -ExecutionPolicy Bypass -File "_bin\merge_keywords.ps1"
 
 echo.
